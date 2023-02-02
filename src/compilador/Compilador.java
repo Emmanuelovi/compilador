@@ -3,7 +3,7 @@
  * Descripción: Analisis lexico
  * Autor: Aníbal Uriel Guijarro Rocha
  * Autor: Emmanuel Gómez Trujillo
- * Fecha: 27 de enero de 2023
+ * Fecha: 02 de febrero de 2023
  */
 package compilador;
 
