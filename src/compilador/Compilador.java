@@ -3,7 +3,7 @@
  * Descripción: Analisis lexico
  * Autor: Aníbal Uriel Guijarro Rocha
  * Autor: Emmanuel Gómez Trujillo
- * Fecha: 02 de febrero de 2023
+ * Fecha: 08 de febrero de 2023
  */
 package compilador;
 
@@ -25,8 +25,19 @@ public class Compilador {
      */
     public static void main(String[] args) throws FileNotFoundException, IOException {
         
-        escritura(lectura("suma.txt"), "prueba.txt");
-        escritura(detector("prueba.txt", "reservadas.txt"), "hola.txt");
+        escritura(eliminarComentarios("codigoFuente.txt"), "codigoSinComentarios.txt");
+        
+        String [] qwerty = analisisLexico("codigoSinComentarios.txt").split("\\s+");
+        String hola = "";
+        boolean comentario = false;
+        
+        for(int i=0; i<qwerty.length; i++){
+            
+            hola = hola + qwerty[i] + "\n";
+            
+        }
+        
+        escritura(hola, "tokens.txt");
         
     } //Fin de main
     
@@ -37,13 +48,12 @@ public class Compilador {
      * @return Cadena de texto con el contenido del archivo de texto ya procesado
      * @throws FileNotFoundException 
      */
-    public static String lectura(String archivo) throws FileNotFoundException{
+    public static String eliminarComentarios(String archivo) throws FileNotFoundException{
         //VARIABLES
         Scanner in = null; //Para leer el archivo txt
         String linea = ""; //Variable que almacenará la línea en curso del archivo que se está leyendo
         String contenido = ""; //Variable que tendrá el contenido ya procesado para el nuevo archivo de texto
         String [] eliminarComentarios; //Arreglo para eliminar los comentarios simples (Es decir, solo para cuando comience con //)
-        int contador = 0; //Contador de puntos y comas dentro del programa analizado
         boolean comentario = false; //Para identificar los comentarios de varias lineas
         
         try{
@@ -74,16 +84,8 @@ public class Compilador {
                     eliminarComentarios = linea.split("//"); //Guardar en un arreglo la parte de código [0] y la parte de comentario [1] (Separación)
                     
                     if(eliminarComentarios[0].isBlank()==false){ //En caso de que la primera posicion del arreglo NO sea una linea en blanco
-                        
-                        //eliminarComentarios[0] = eliminarComentarios[0].replaceAll("\\s*$",""); //Eliminar los espacio en blanco del final y guardar en el mismo campo
-                        
+
                         contenido = contenido + eliminarComentarios[0].trim().replaceAll("\\s+"," ") + "\n"; //Guardar en 'contenido' la parte del código primoridial
-                        
-                        if(eliminarComentarios[0].endsWith(";")){ //En caso de detectar un punto y coma al final de la instrucciones
-                            
-                            contador++;
-                            
-                        }
                         
                     }
                     
@@ -96,8 +98,6 @@ public class Compilador {
                 }
                 
             }
-            
-            //contenido = contenido + "CANTIDAD DE PUNTOS Y COMAS (;) = " + contador;
             
             return contenido;
             
@@ -131,6 +131,82 @@ public class Compilador {
         
     } //Fin de método 'escritura'
     
+    public static String analisisLexico(String archivo) throws FileNotFoundException{
+        //VARIABLES
+        Scanner in = null; //Para leer el 'archivo.txt' -- Contiene el programa fuente a analizar
+        String [] linea;
+        String palabra;
+        String contenidoSeparado = "";
+        
+        try{
+            
+            in = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
+            
+            while(in.hasNextLine()){
+                
+                palabra = in.nextLine();
+                linea = palabra.split("");
+                
+                for(int i=0; i<linea.length; i++){
+
+                    if(linea[i].equals(";")){
+                        palabra = palabra.replaceAll(";"," ; ");
+                    }
+                    else if(linea[i].equals(",")){
+                        palabra = palabra.replaceAll(","," , ");
+                    }
+                    else if(linea[i].matches("\\(")){
+                        palabra = palabra.replaceAll("\\("," ( ");
+                    }
+                    else if(linea[i].matches("\\)")){
+                        palabra = palabra.replaceAll("\\)"," ) ");
+                    }
+                    else if(linea[i].matches("\\.")){
+                        palabra = palabra.replaceAll("\\.", " . ");
+                    }
+                    else if(linea[i].matches("\\{")){
+                        palabra = palabra.replaceAll("\\{", " { ");
+                    }
+                    else if(linea[i].matches("\\}")){
+                        palabra = palabra.replaceAll("\\}", " } ");
+                    }
+                    else if(linea[i].matches("\\[")){
+                        palabra = palabra.replaceAll("\\[", " [ ");
+                    }
+                    else if(linea[i].matches("\\]")){
+                        palabra = palabra.replaceAll("\\]", " ] ");
+                    }
+                    else if(linea[i].matches("\\+")){
+                        palabra = palabra.replaceAll("\\+", " + ");
+                    }
+                    else if(linea[i].matches("\\-")){
+                        palabra = palabra.replaceAll("\\-", " - ");
+                    }
+                    else if(linea[i].matches("\\*")){
+                        palabra = palabra.replaceAll("\\*", " * ");
+                    }
+                    else if(linea[i].matches("/")){
+                        palabra = palabra.replaceAll("/", " / ");
+                    }
+                    else if(linea[i].matches("\\|")){
+                        palabra = palabra.replaceAll("\\|", " | ");
+                    }
+                }
+                
+                contenidoSeparado = contenidoSeparado + palabra + "\n";
+                
+            }
+            
+            return contenidoSeparado;
+            
+        }finally{
+            if(in!=null){ //En caso de estar abierto el documento
+                in.close(); //Cerrar el documento
+            }
+        }
+        
+    } //Fin de método 'analisisLexico'
+    
     public static String detector(String archivo, String reservadas) throws FileNotFoundException{
         //VARIABLES
         Scanner in = null; //Para leer el 'archivo.txt'
@@ -155,10 +231,29 @@ public class Compilador {
                     
                     palabra = in2.nextLine();
                     
+                    if(linea.startsWith("{")){
+                        contenidoSeparado = contenidoSeparado + "{" + "\n";
+                        
+                        if(linea.split("\\{").length<1){
+                            bandera = true;
+                        }else{
+                            linea = linea.split("\\{")[1];
+                        }
+                    }
+                    
+                    if(linea.contains("int ")){
+                        contenidoSeparado = contenidoSeparado + "int\n";
+                        
+                        if(linea.split("int").length<1){
+                            bandera = true;
+                        }else{
+                            linea = linea.split("int")[1];
+                        }
+                    }
+                    
                     if(linea.startsWith(palabra))
                     {
                         contenidoSeparado = contenidoSeparado + palabra + "\n";
-                        //System.out.println("Entro 1" + contenidoSeparado);
                         
                         if(linea.split(palabra).length<1){
                             bandera = true;
@@ -167,18 +262,12 @@ public class Compilador {
                         }
                         
                     }else if(linea.contains(palabra)){
-                        System.out.println(palabra + "--- jojo --- " + linea);
-                        System.out.println(linea.split("\\{").length);
                         contenidoSeparado = contenidoSeparado + linea.split(palabra)[0] + "\n" + palabra + "\n";
                         linea = linea.replace(linea.split(palabra)[0], "");
                         linea = linea.replace(palabra, "");
                     }
                     
-                    
-                    
                 }
-                
-                
                 
             }
             
