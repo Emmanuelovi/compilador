@@ -3,7 +3,8 @@
  * Descripción: Analisis lexico
  * Autor: Aníbal Uriel Guijarro Rocha
  * Autor: Emmanuel Gómez Trujillo
- * Fecha: 08 de febrero de 2023
+ * Autor: Mario Alessandro
+ * Fecha: 09 de febrero de 2023
  */
 package compilador;
 
@@ -17,6 +18,7 @@ import java.util.Scanner;
 /**
  * @author Anibal Uriel Guijarro Rocha
  * @author Emmanuel Gómez Trujillo
+ * @author Mario Alessandro
  */
 public class Compilador {
 
@@ -26,24 +28,38 @@ public class Compilador {
     public static void main(String[] args) throws FileNotFoundException, IOException {
         
         escritura(eliminarComentarios("codigoFuente.txt"), "codigoSinComentarios.txt");
-        
-        String [] qwerty = analisisLexico("codigoSinComentarios.txt").split("\\s+");
-        String hola = "";
-        boolean comentario = false;
-        
-        for(int i=0; i<qwerty.length; i++){
-            
-            hola = hola + qwerty[i] + "\n";
-            
-        }
-        
-        escritura(hola, "tokens.txt");
+        escritura(analisisLexico("codigoSinComentarios.txt"), "tokens.txt");
+        escritura(separarTokens("tokens.txt"), "tokens.txt");
         
     } //Fin de main
     
+    //MÉTODOS
+    /**
+     * Método para la escritura de un archivo de texto. Escribe directamente el parametro de texto en el fichero
+     * @param contenido Cadena de texto que contiene todo el texto a escribir en el nuevo archivo
+     * @param nuevoArchivo Nombre del nuevo archivo a escribir
+     * @throws IOException 
+     */
+    public static void escritura(String contenido, String nuevoArchivo) throws IOException{
+        //VARIABLES
+        PrintWriter out = null;
+        
+        try{
+            
+            out = new PrintWriter(new FileWriter(nuevoArchivo));
+            out.println(contenido); //Escritura en el fichero
+            
+        }finally{
+            if(out!=null){ //En caso de estar abierto el documento
+                out.close(); //Cerrar el documento
+            }
+        }
+        
+    } //Fin de método 'escritura'
+    
     /**
      * Método para leer un archivo de texto, posteriormente realiza una serie de clasificaciones (analisis lexico)
-     * donde se eliminan los espacios en blanco (duplicados y del final de la linea), lineas en blanco y los comentarios; dejando solamente el codigo
+     * donde se eliminan los espacios en blanco del inicio, lineas en blanco y los comentarios; dejando solamente el codigo
      * @param archivo Nombre del archivo a leer
      * @return Cadena de texto con el contenido del archivo de texto ya procesado
      * @throws FileNotFoundException 
@@ -74,9 +90,7 @@ public class Compilador {
                  */
                 
                 if(linea.startsWith("/*")){ //En caso de detectar el INICIO de un comentario de varias lineas
-                    
                     comentario = true;
-                    
                 }
                 
                 if(linea.isBlank()==false && comentario==false){ //En caso de NO ser una linea en blanco y no ser un comentario de varias lineas
@@ -84,17 +98,13 @@ public class Compilador {
                     eliminarComentarios = linea.split("//"); //Guardar en un arreglo la parte de código [0] y la parte de comentario [1] (Separación)
                     
                     if(eliminarComentarios[0].isBlank()==false){ //En caso de que la primera posicion del arreglo NO sea una linea en blanco
-
-                        contenido = contenido + eliminarComentarios[0].trim().replaceAll("\\s+"," ") + "\n"; //Guardar en 'contenido' la parte del código primoridial
-                        
+                        contenido = contenido + eliminarComentarios[0] + "\n"; //Guardar en 'contenido' la parte del código primoridial
                     }
                     
                 }
                 
-                if(linea.startsWith("*/")){ //En caso de detectar el FIN de un comentario de varias lineas
-                    
+                if(linea.endsWith("*/")){ //En caso de detectar el FIN de un comentario de varias lineas
                     comentario = false;
-                    
                 }
                 
             }
@@ -106,36 +116,20 @@ public class Compilador {
                 in.close(); //Cerrar el documento
             }
         }
-    } //Fin de método 'lectura'
+    } //Fin de método 'eliminarComentarios'
     
     /**
-     * Método para la escritura de un archivo de texto. Escribe directamente el parametro de texto en el fichero
-     * @param contenido Cadena de texto que contiene todo el texto a escribir en el nuevo archivo
-     * @param nuevoArchivo Nombre del nuevo archivo a escribir
-     * @throws IOException 
+     * Método para identificar las partes primordiales del código (caracteres especiales, metacaracteres y operadores)
+     * @param archivo Nombre del archivo a leer
+     * @return Cadena de texto con el contenido del archivo de texto ya procesado (Identificación de caracteres y operadores)
+     * @throws FileNotFoundException 
      */
-    public static void escritura(String contenido, String nuevoArchivo) throws IOException{
-        //VARIABLES
-        PrintWriter out = null;
-        
-        try{
-            
-            out = new PrintWriter(new FileWriter(nuevoArchivo));
-            out.println(contenido); //Escritura en el fichero
-            
-        }finally{
-            if(out!=null){ //En caso de estar abierto el documento
-                out.close(); //Cerrar el documento
-            }
-        }
-        
-    } //Fin de método 'escritura'
-    
     public static String analisisLexico(String archivo) throws FileNotFoundException{
         //VARIABLES
-        Scanner in = null; //Para leer el 'archivo.txt' -- Contiene el programa fuente a analizar
-        String [] linea;
-        String palabra;
+        Scanner in = null; //Variable para leer el archivo txt (programa fuente sin comentarios)
+        String linea; //Variable que almacenará la línea en curso del archivo que se está leyendo
+        String [] caracteres; //Variable (arreglo) que almacenará cada uno de los caracteres de la linea, para identificar 'caracteres especiales'
+        
         String contenidoSeparado = "";
         
         try{
@@ -144,56 +138,92 @@ public class Compilador {
             
             while(in.hasNextLine()){
                 
-                palabra = in.nextLine();
-                linea = palabra.split("");
+                linea = in.nextLine();
+                caracteres = linea.split("");
                 
-                for(int i=0; i<linea.length; i++){
-
-                    if(linea[i].equals(";")){
-                        palabra = palabra.replaceAll(";"," ; ");
+                for(int i=0; i<caracteres.length; i++){
+                    //Identificar caracteres especiales o metacaracteres
+                    if(caracteres[i].matches(";")){
+                        linea = linea.replaceAll(";","\n;\n");
                     }
-                    else if(linea[i].equals(",")){
-                        palabra = palabra.replaceAll(","," , ");
+                    else if(caracteres[i].equals(",")){
+                        linea = linea.replaceAll(",","\n,\n");
                     }
-                    else if(linea[i].matches("\\(")){
-                        palabra = palabra.replaceAll("\\("," ( ");
+                    else if(caracteres[i].matches("\\(")){
+                        linea = linea.replaceAll("\\(","\n(\n");
                     }
-                    else if(linea[i].matches("\\)")){
-                        palabra = palabra.replaceAll("\\)"," ) ");
+                    else if(caracteres[i].matches("\\)")){
+                        linea = linea.replaceAll("\\)","\n)\n");
                     }
-                    else if(linea[i].matches("\\.")){
-                        palabra = palabra.replaceAll("\\.", " . ");
+                    else if(caracteres[i].matches("\\.")){
+                        linea = linea.replaceAll("\\.", "\n.\n");
                     }
-                    else if(linea[i].matches("\\{")){
-                        palabra = palabra.replaceAll("\\{", " { ");
+                    else if(caracteres[i].matches("\\{")){
+                        linea = linea.replaceAll("\\{", "\n{\n");
                     }
-                    else if(linea[i].matches("\\}")){
-                        palabra = palabra.replaceAll("\\}", " } ");
+                    else if(caracteres[i].matches("\\}")){
+                        linea = linea.replaceAll("\\}", "\n}\n");
                     }
-                    else if(linea[i].matches("\\[")){
-                        palabra = palabra.replaceAll("\\[", " [ ");
+                    else if(caracteres[i].matches("\\[")){
+                        linea = linea.replaceAll("\\[", "\n[\n");
                     }
-                    else if(linea[i].matches("\\]")){
-                        palabra = palabra.replaceAll("\\]", " ] ");
+                    else if(caracteres[i].matches("\\]")){
+                        linea = linea.replaceAll("\\]", "\n]\n");
                     }
-                    else if(linea[i].matches("\\+")){
-                        palabra = palabra.replaceAll("\\+", " + ");
+                    else if(caracteres[i].matches("\\+")){
+                        linea = linea.replaceAll("\\+", "\n+\n");
                     }
-                    else if(linea[i].matches("\\-")){
-                        palabra = palabra.replaceAll("\\-", " - ");
+                    else if(caracteres[i].matches("\\-")){
+                        linea = linea.replaceAll("\\-", "\n-\n");
                     }
-                    else if(linea[i].matches("\\*")){
-                        palabra = palabra.replaceAll("\\*", " * ");
+                    else if(caracteres[i].matches("\\*")){
+                        linea = linea.replaceAll("\\*", "\n*\n");
                     }
-                    else if(linea[i].matches("/")){
-                        palabra = palabra.replaceAll("/", " / ");
+                    else if(caracteres[i].matches("/")){
+                        linea = linea.replaceAll("/", "\n/\n");
                     }
-                    else if(linea[i].matches("\\|")){
-                        palabra = palabra.replaceAll("\\|", " | ");
+                    else if(caracteres[i].matches("\"")){
+                        linea = linea.replaceAll("\"", "\n\"\n");
+                    }
+                    else if(caracteres[i].matches("\\/")){
+                        linea = linea.replaceAll("\\/", "\n/\n");
                     }
                 }
                 
-                contenidoSeparado = contenidoSeparado + palabra + "\n";
+                //Identificar operadores de comparación (Varios IF's para caso de haber varios en una misma linea)
+                if(linea.contains("||")){
+                    linea = linea.replaceAll("||", "\n||\n");
+                }
+                
+                if(linea.contains(">=")){
+                    linea = linea.replaceAll(">=", "\n>=\n");
+                }
+                else if(linea.contains(">")){
+                    linea = linea.replaceAll(">", "\n>\n");
+                }
+                
+                if(linea.contains("<=")){
+                    linea = linea.replaceAll("<=", "\n<=\n");
+                }
+                else if(linea.contains("<")){
+                    linea = linea.replaceAll("<", "\n<\n");
+                }
+                
+                if(linea.contains("==")){
+                    linea = linea.replaceAll("==", "\n==\n");
+                }
+                else if(linea.contains("=")){
+                    
+                    if(linea.contains("!=")){
+                        linea = linea.replaceAll("!=", "\n!=\n");
+                    }
+                    else{
+                        linea = linea.replaceAll("=", "\n=\n");
+                    }
+                    
+                } //Fin de la identificación de operadores de comparación
+                
+                contenidoSeparado = contenidoSeparado + linea + "\n";
                 
             }
             
@@ -207,81 +237,67 @@ public class Compilador {
         
     } //Fin de método 'analisisLexico'
     
-    public static String detector(String archivo, String reservadas) throws FileNotFoundException{
+    /**
+     * Método para la correcta separación de los tokens identificados del método 'analisisLexico'.
+     * Separados por retornos o espacios ( a excepción de los String que se dejan juntos, esto para una mejor organización)
+     * @param archivo Nombre del archivo en donde se pretende identificar y separar los tokens
+     * @return String con todos los token separados apropiadamente
+     * @throws FileNotFoundException 
+     */
+    public static String separarTokens(String archivo) throws FileNotFoundException{
         //VARIABLES
-        Scanner in = null; //Para leer el 'archivo.txt'
-        Scanner in2 = null; //Para leer el 'reservadas.txt'
-        boolean bandera = false;
-        String linea;
-        String palabra;
-        String contenidoSeparado= "";
+        Scanner in = null; //Variable para leer el archivo txt
+        String linea = ""; //Variable que almacenará la línea en curso del archivo que se está leyendo
+        String contenido = ""; //Variable que tendrá el contenido ya procesado para el nuevo archivo de texto
+        boolean esCadena = false; //Variable para identificar cuando se trate de un String, para juntarlos en una sola linea
+        String [] separador; //Variable para separar los tokens (por espacios y retornos)
         
         try{
             
             in = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
             
-            
             while(in.hasNextLine()){
                 
-                in2 = new Scanner(new FileReader(reservadas)); //Abrir el fichero de texto con FileReader (Iniciador)
                 linea = in.nextLine();
-                bandera = false;
                 
-                while(bandera==false && in2.hasNextLine()){
+                if(linea.isBlank()==false){ //Entrar en caso de no ser una linea en blanco
                     
-                    palabra = in2.nextLine();
-                    
-                    if(linea.startsWith("{")){
-                        contenidoSeparado = contenidoSeparado + "{" + "\n";
-                        
-                        if(linea.split("\\{").length<1){
-                            bandera = true;
-                        }else{
-                            linea = linea.split("\\{")[1];
+                    if(linea.startsWith("\"") && esCadena==false){ //En caso de comenzar una cadena de texto (String)
+                        esCadena = true;
+                    }
+                    else if(linea.startsWith("\"") && esCadena){ //En caso de terminar una cadena de texto (String)
+                        esCadena = false;
+                        contenido = contenido + linea + "\n"; //Terminar el String con retorno
+                    }
+                    else if(esCadena == false){ //En caso de NO ser una cadena de texto (String)
+
+                        separador = linea.split("\\s+"); //Elementos separados por espacios
+
+                        for(int i=0; i<separador.length; i++){
+
+                            if(separador[i].isBlank()==false){ //En caso de NO ser un elemento en blanco (validación)
+                                contenido = contenido + separador[i] + "\n"; //Guardar en una sola linea al token o variable identificada
+                            }
+                            
                         }
+
                     }
                     
-                    if(linea.contains("int ")){
-                        contenidoSeparado = contenidoSeparado + "int\n";
-                        
-                        if(linea.split("int").length<1){
-                            bandera = true;
-                        }else{
-                            linea = linea.split("int")[1];
-                        }
-                    }
-                    
-                    if(linea.startsWith(palabra))
-                    {
-                        contenidoSeparado = contenidoSeparado + palabra + "\n";
-                        
-                        if(linea.split(palabra).length<1){
-                            bandera = true;
-                        }else{
-                            linea = linea.split(palabra)[1];
-                        }
-                        
-                    }else if(linea.contains(palabra)){
-                        contenidoSeparado = contenidoSeparado + linea.split(palabra)[0] + "\n" + palabra + "\n";
-                        linea = linea.replace(linea.split(palabra)[0], "");
-                        linea = linea.replace(palabra, "");
+                    if(esCadena){ //En caso de ser una cadena de texto (String)
+                        contenido = contenido + linea; //Guardar la linea sin retorno (esto para juntar todo el string en una sola linea)
                     }
                     
                 }
                 
             }
             
-            return contenidoSeparado;
+            return contenido;
             
         }finally{
             if(in!=null){ //En caso de estar abierto el documento
                 in.close(); //Cerrar el documento
             }
-            if(in2!=null){ //En caso de estar abierto el documento
-                in2.close(); //Cerrar el documento
-            }
         }
-        
-    } //Fin de método 'detector'
+    } //Método 'separarTokens'
     
 } //Fin de clase
