@@ -3,7 +3,7 @@
  * Descripción: Analisis lexico
  * Autor: Aníbal Uriel Guijarro Rocha
  * Autor: Emmanuel Gómez Trujillo
- * Autor: Mario Alessandro
+ * Autor: Mario Alessandro López García
  * Fecha: 09 de febrero de 2023
  */
 package compilador;
@@ -13,12 +13,13 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Scanner;
 
 /**
  * @author Anibal Uriel Guijarro Rocha
  * @author Emmanuel Gómez Trujillo
- * @author Mario Alessandro
+ * @author Mario Alessandro López García
  */
 public class Compilador {
 
@@ -252,6 +253,19 @@ public class Compilador {
         boolean esCadena = false; //Variable para identificar cuando se trate de un String, para juntarlos en una sola linea
         String [] separador; //Variable para separar los tokens (por espacios y retornos)
         
+//        String [] lexemas = {"package", "import", "java", "BufferedReader", "io", "public", "static", "class", "System", 
+//            "out", "print", "println", "nextInt", "nextLine", "nextDouble", "String", "int", "double", "float", "char", 
+//            "long", "private", "new", "void", "FileReader", "readLine", "while", "if", "for", "else", "null", "switch",
+//            "case", "do", "try", "catch", "return", "true", "false"};
+//        
+//        String [] opeArit = {"+", "-", "/", "*", "%", "^"};
+//        
+//        String [] opeComp = {">", "<", "=", ">=", "<=", "=="};
+//        
+//        String [] opeLog = {"!=", "==", "||", "&&"};
+//        
+//        String [] tokens = {";", ":", ",", ".", "(", ")", "{", "}", "[", "]"};
+        
         try{
             
             in = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
@@ -267,7 +281,7 @@ public class Compilador {
                     }
                     else if(linea.startsWith("\"") && esCadena){ //En caso de terminar una cadena de texto (String)
                         esCadena = false;
-                        contenido = contenido + linea + "\n"; //Terminar el String con retorno
+                        contenido = contenido + linea + " STRING\n"; //Terminar el String con retorno
                     }
                     else if(esCadena == false){ //En caso de NO ser una cadena de texto (String)
 
@@ -276,7 +290,40 @@ public class Compilador {
                         for(int i=0; i<separador.length; i++){
 
                             if(separador[i].isBlank()==false){ //En caso de NO ser un elemento en blanco (validación)
-                                contenido = contenido + separador[i] + "\n"; //Guardar en una sola linea al token o variable identificada
+                                
+                                if(separador[i].equals("package") || separador[i].equals("import") || separador[i].equals("java") || separador[i].equals("BufferedReader") || 
+                                   separador[i].equals("io") || separador[i].equals("public") || separador[i].equals("static") || separador[i].equals("class") || 
+                                   separador[i].equals("System") || separador[i].equals("out") || separador[i].equals("print") || separador[i].equals("println") || 
+                                   separador[i].equals("nextInt") || separador[i].equals("nextLine") || separador[i].equals("nextDouble") || separador[i].equals("String") || 
+                                   separador[i].equals("int") || separador[i].equals("double") || separador[i].equals("float") || separador[i].equals("char") || 
+                                   separador[i].equals("long") || separador[i].equals("private") || separador[i].equals("new") || separador[i].equals("void") || 
+                                   separador[i].equals("FileReader") || separador[i].equals("readLine") || separador[i].equals("while") || separador[i].equals("if") || 
+                                   separador[i].equals("for") || separador[i].equals("else") || separador[i].equals("null") || separador[i].equals("switch") || 
+                                   separador[i].equals("case") || separador[i].equals("do") || separador[i].equals("try") || separador[i].equals("catch") || 
+                                   separador[i].equals("return") || separador[i].equals("true") || separador[i].equals("false") || separador[i].equals("Scanner") ||
+                                   separador[i].equals("util") || separador[i].equals("main") || separador[i].equals("args") || separador[i].equals("in")){
+                                    contenido = contenido + separador[i] + " LEXEMA\n"; //Guardar en una sola linea al token o variable identificada
+                                }
+                                else if(separador[i].equals("+") || separador[i].equals("-") || separador[i].equals("/") || separador[i].equals("*") ||
+                                        separador[i].equals("%") || separador[i].equals("^")){
+                                    contenido = contenido + separador[i] + " ARITMETICO\n"; //Guardar en una sola linea al token o variable identificada   
+                                }
+                                else if(separador[i].equals(">") || separador[i].equals("<") || separador[i].equals("=") || separador[i].equals(">=") ||
+                                        separador[i].equals("<=") || separador[i].equals("==")){
+                                    contenido = contenido + separador[i] + " COMPARACION\n"; //Guardar en una sola linea al token o variable identificada   
+                                }
+                                else if(separador[i].equals(";") || separador[i].equals(":") || separador[i].equals(",") || separador[i].equals(".") ||
+                                        separador[i].equals("(") || separador[i].equals(")") || separador[i].equals("{") || separador[i].equals("}") ||
+                                        separador[i].equals("[") || separador[i].equals("]")){
+                                    contenido = contenido + separador[i] + " TOKEN\n"; //Guardar en una sola linea al token o variable identificada
+                                }
+                                else if(separador[i].equals("!=") || separador[i].equals("==") || separador[i].equals("||") || separador[i].equals("&&")){
+                                    contenido = contenido + separador[i] + " LOGICO\n"; //Guardar en una sola linea al token o variable identificada 
+                                }
+                                else{
+                                    contenido = contenido + separador[i] + " VARIABLE\n"; //Guardar en una sola linea al token o variable identificada   
+                                }
+                                
                             }
                             
                         }
