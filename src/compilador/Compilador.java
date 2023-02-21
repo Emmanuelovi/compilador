@@ -13,7 +13,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.Scanner;
 
 /**
@@ -253,19 +252,6 @@ public class Compilador {
         boolean esCadena = false; //Variable para identificar cuando se trate de un String, para juntarlos en una sola linea
         String [] separador; //Variable para separar los tokens (por espacios y retornos)
         
-//        String [] lexemas = {"package", "import", "java", "BufferedReader", "io", "public", "static", "class", "System", 
-//            "out", "print", "println", "nextInt", "nextLine", "nextDouble", "String", "int", "double", "float", "char", 
-//            "long", "private", "new", "void", "FileReader", "readLine", "while", "if", "for", "else", "null", "switch",
-//            "case", "do", "try", "catch", "return", "true", "false"};
-//        
-//        String [] opeArit = {"+", "-", "/", "*", "%", "^"};
-//        
-//        String [] opeComp = {">", "<", "=", ">=", "<=", "=="};
-//        
-//        String [] opeLog = {"!=", "==", "||", "&&"};
-//        
-//        String [] tokens = {";", ":", ",", ".", "(", ")", "{", "}", "[", "]"};
-        
         try{
             
             in = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
@@ -291,37 +277,53 @@ public class Compilador {
 
                             if(separador[i].isBlank()==false){ //En caso de NO ser un elemento en blanco (validación)
                                 
-                                if(separador[i].equals("package") || separador[i].equals("import") || separador[i].equals("java") || separador[i].equals("BufferedReader") || 
-                                   separador[i].equals("io") || separador[i].equals("public") || separador[i].equals("static") || separador[i].equals("class") || 
-                                   separador[i].equals("System") || separador[i].equals("out") || separador[i].equals("print") || separador[i].equals("println") || 
-                                   separador[i].equals("nextInt") || separador[i].equals("nextLine") || separador[i].equals("nextDouble") || separador[i].equals("String") || 
-                                   separador[i].equals("int") || separador[i].equals("double") || separador[i].equals("float") || separador[i].equals("char") || 
-                                   separador[i].equals("long") || separador[i].equals("private") || separador[i].equals("new") || separador[i].equals("void") || 
-                                   separador[i].equals("FileReader") || separador[i].equals("readLine") || separador[i].equals("while") || separador[i].equals("if") || 
-                                   separador[i].equals("for") || separador[i].equals("else") || separador[i].equals("null") || separador[i].equals("switch") || 
-                                   separador[i].equals("case") || separador[i].equals("do") || separador[i].equals("try") || separador[i].equals("catch") || 
-                                   separador[i].equals("return") || separador[i].equals("true") || separador[i].equals("false") || separador[i].equals("Scanner") ||
-                                   separador[i].equals("util") || separador[i].equals("main") || separador[i].equals("args") || separador[i].equals("in")){
-                                    contenido = contenido + separador[i] + " LEXEMA\n"; //Guardar en una sola linea al token o variable identificada
-                                }
-                                else if(separador[i].equals("+") || separador[i].equals("-") || separador[i].equals("/") || separador[i].equals("*") ||
-                                        separador[i].equals("%") || separador[i].equals("^")){
-                                    contenido = contenido + separador[i] + " ARITMETICO\n"; //Guardar en una sola linea al token o variable identificada   
-                                }
-                                else if(separador[i].equals(">") || separador[i].equals("<") || separador[i].equals("=") || separador[i].equals(">=") ||
-                                        separador[i].equals("<=") || separador[i].equals("==")){
-                                    contenido = contenido + separador[i] + " COMPARACION\n"; //Guardar en una sola linea al token o variable identificada   
-                                }
-                                else if(separador[i].equals(";") || separador[i].equals(":") || separador[i].equals(",") || separador[i].equals(".") ||
-                                        separador[i].equals("(") || separador[i].equals(")") || separador[i].equals("{") || separador[i].equals("}") ||
-                                        separador[i].equals("[") || separador[i].equals("]")){
-                                    contenido = contenido + separador[i] + " TOKEN\n"; //Guardar en una sola linea al token o variable identificada
-                                }
-                                else if(separador[i].equals("!=") || separador[i].equals("==") || separador[i].equals("||") || separador[i].equals("&&")){
-                                    contenido = contenido + separador[i] + " LOGICO\n"; //Guardar en una sola linea al token o variable identificada 
-                                }
-                                else{
-                                    contenido = contenido + separador[i] + " VARIABLE\n"; //Guardar en una sola linea al token o variable identificada   
+                                if(separador[i].matches("\\d+")){ //Numeros enteros
+                                    contenido = contenido + separador[i] + " 1\n";
+                                }else if(separador[i].matches("^-?[0-9]+(\\.[0-9]+)?$")){ //Numeros reales
+                                    contenido = contenido + separador[i] + " 2\n";
+                                }else if(separador[i].startsWith("\"") && separador[i].endsWith("\"")){ //Cadenas de texto
+                                    contenido = contenido + separador[i] + " 3\n";
+                                }else if(separador[i].equals("int") || separador[i].equals("string") || separador[i].equals("char") ||
+                                        separador[i].equals("long") || separador[i].equals("double") || separador[i].equals("bool")){
+                                    contenido = contenido + separador[i] + " 4\n";
+                                }else if(separador[i].equals("+")){
+                                    contenido = contenido + separador[i] + " 5\n";
+                                }else if(separador[i].equals("*")){
+                                    contenido = contenido + separador[i] + " 6\n";
+                                }else if(separador[i].equals("<") || separador[i].equals(">")){
+                                    contenido = contenido + separador[i] + " 7\n";
+                                }else if(separador[i].equals("||")){
+                                    contenido = contenido + separador[i] + " 8\n";
+                                }else if(separador[i].equals("&&")){
+                                    contenido = contenido + separador[i] + " 9\n";
+                                }else if(separador[i].equals("!=")){
+                                    contenido = contenido + separador[i] + " 10\n";
+                                }else if(separador[i].equals("==")){
+                                    contenido = contenido + separador[i] + " 11\n";
+                                }else if(separador[i].equals(";")){
+                                    contenido = contenido + separador[i] + " 12\n";
+                                }else if(separador[i].equals(",")){
+                                    contenido = contenido + separador[i] + " 13\n";
+                                }else if(separador[i].equals("(")){
+                                    contenido = contenido + separador[i] + " 14\n";
+                                }else if(separador[i].equals(")")){
+                                    contenido = contenido + separador[i] + " 15\n";
+                                }else if(separador[i].equals("{")){
+                                    contenido = contenido + separador[i] + " 16\n";
+                                }else if(separador[i].equals("}")){
+                                    contenido = contenido + separador[i] + " 17\n";
+                                }else if(separador[i].equals("=")){
+                                    contenido = contenido + separador[i] + " 18\n";
+                                }else if(separador[i].equals("if")){
+                                    contenido = contenido + separador[i] + " 19\n";
+                                }else if(separador[i].equals("while")){
+                                    contenido = contenido + separador[i] + " 20\n";
+                                }else if(separador[i].equals("return")){
+                                    contenido = contenido + separador[i] + " 21\n";
+                                }else if(separador[i].equals("else")){
+                                    contenido = contenido + separador[i] + " 22\n";
+                                }else{ //Identificadores
+                                    contenido = contenido + separador[i] + " 0\n";
                                 }
                                 
                             }
