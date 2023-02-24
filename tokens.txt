@@ -10,7 +10,6 @@ num1 0
 = 18
 5 1
 ; 12
-"Hola mundo" STRING
 int 4
 num2 0
 ; 12
@@ -18,9 +17,6 @@ num2 0
 = 18
 8 1
 ; 12
-5 1
-. 0
-273 1
 int 4
 resultado 0
 ; 12

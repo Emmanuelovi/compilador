@@ -4,7 +4,7 @@
  * Autor: Aníbal Uriel Guijarro Rocha
  * Autor: Emmanuel Gómez Trujillo
  * Autor: Mario Alessandro López García
- * Fecha: 09 de febrero de 2023
+ * Fecha: 24 de febrero de 2023
  */
 package compilador;
 
@@ -13,6 +13,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
@@ -21,7 +22,9 @@ import java.util.Scanner;
  * @author Mario Alessandro López García
  */
 public class Compilador {
-
+    
+    static ArrayList entrada = new ArrayList();
+    
     /**
      * @param args the command line arguments
      */
@@ -279,56 +282,81 @@ public class Compilador {
                                 
                                 if(separador[i].matches("\\d+")){ //Numeros enteros
                                     contenido = contenido + separador[i] + " 1\n";
+                                    entrada.add(1);
                                 }else if(separador[i].matches("^-?[0-9]+(\\.[0-9]+)?$")){ //Numeros reales
                                     contenido = contenido + separador[i] + " 2\n";
+                                    entrada.add(2);
                                 }else if(separador[i].startsWith("\"") && separador[i].endsWith("\"")){ //Cadenas de texto
                                     contenido = contenido + separador[i] + " 3\n";
+                                    entrada.add(3);
                                 }else if(separador[i].equals("int") || separador[i].equals("string") || separador[i].equals("char") ||
                                         separador[i].equals("long") || separador[i].equals("double") || separador[i].equals("bool")){
                                     contenido = contenido + separador[i] + " 4\n";
+                                    entrada.add(4);
                                 }else if(separador[i].equals("+")){
                                     contenido = contenido + separador[i] + " 5\n";
+                                    entrada.add(5);
                                 }else if(separador[i].equals("*")){
                                     contenido = contenido + separador[i] + " 6\n";
+                                    entrada.add(6);
                                 }else if(separador[i].equals("<") || separador[i].equals(">")){
                                     contenido = contenido + separador[i] + " 7\n";
+                                    entrada.add(7);
                                 }else if(separador[i].equals("||")){
                                     contenido = contenido + separador[i] + " 8\n";
+                                    entrada.add(8);
                                 }else if(separador[i].equals("&&")){
                                     contenido = contenido + separador[i] + " 9\n";
+                                    entrada.add(9);
                                 }else if(separador[i].equals("!=")){
                                     contenido = contenido + separador[i] + " 10\n";
+                                    entrada.add(10);
                                 }else if(separador[i].equals("==")){
                                     contenido = contenido + separador[i] + " 11\n";
+                                    entrada.add(11);
                                 }else if(separador[i].equals(";")){
                                     contenido = contenido + separador[i] + " 12\n";
+                                    entrada.add(12);
                                 }else if(separador[i].equals(",")){
                                     contenido = contenido + separador[i] + " 13\n";
+                                    entrada.add(13);
                                 }else if(separador[i].equals("(")){
                                     contenido = contenido + separador[i] + " 14\n";
+                                    entrada.add(14);
                                 }else if(separador[i].equals(")")){
                                     contenido = contenido + separador[i] + " 15\n";
+                                    entrada.add(15);
                                 }else if(separador[i].equals("{")){
                                     contenido = contenido + separador[i] + " 16\n";
+                                    entrada.add(16);
                                 }else if(separador[i].equals("}")){
                                     contenido = contenido + separador[i] + " 17\n";
+                                    entrada.add(17);
                                 }else if(separador[i].equals("=")){
                                     contenido = contenido + separador[i] + " 18\n";
+                                    entrada.add(18);
                                 }else if(separador[i].equals("if")){
                                     contenido = contenido + separador[i] + " 19\n";
+                                    entrada.add(19);
                                 }else if(separador[i].equals("while")){
                                     contenido = contenido + separador[i] + " 20\n";
+                                    entrada.add(20);
                                 }else if(separador[i].equals("return")){
                                     contenido = contenido + separador[i] + " 21\n";
+                                    entrada.add(21);
                                 }else if(separador[i].equals("else")){
                                     contenido = contenido + separador[i] + " 22\n";
+                                    entrada.add(22);
                                 }else{ //Identificadores
                                     contenido = contenido + separador[i] + " 0\n";
+                                    entrada.add(0);
                                 }
                                 
                             }
                             
                         }
+                        
+                        entrada.add("$");
 
                     }
                     
@@ -348,5 +376,112 @@ public class Compilador {
             }
         }
     } //Método 'separarTokens'
+    
+    public static void analisis(String gramatica, String reglas) throws FileNotFoundException{
+        //VARIABLES
+        Scanner in = null; //Para leer el archivo de texto
+        String linea; //Para almacenar toda la linea en curso del archivo
+        ArrayList pila = new ArrayList();
+        String accion = ""; //Para almacenar la acción que se está realizando por parte de la tabla (Elemento de tabla)
+        String [] info; //Para almacenar de manera separada cada elemento de una linea del archivo
+        int indice = 0; //Para almacenar el indice de donde se encuentra un elemento dentro de la tabla (Indice solo en eje X - 'Horizontal')
+        boolean existente = false; //Para conocer si el caracter buscado en la tabla existe o no en ella
+        
+        try{
+            
+            pila.add("0");
+            
+            while(!accion.equals("accept") && !accion.equals("null")){ //Bucle hasta que la cadena sea aceptada o negada por la gramatica
+                
+                in = new Scanner(new FileReader(gramatica)); //Abrir el fichero de texto con FileReader (Iniciador)
+                
+                    linea = in.nextLine();
+                    info = linea.split(",");
+                    
+                    //Buscar el primer caracter de la cadena de entrada con respecto al encabezado de la tabla
+                    if(info[0].contains("NUMEROS")){
+
+                        for(int i=1; i<info.length; i++){
+
+                            if(entrada.get(0).toString().startsWith(info[i])){ //Si se encuentra el elemento
+
+                                indice = i;
+                                existente = true;
+
+                            }
+
+                        }
+
+                    }
+                    
+                    if(existente){
+                        
+                        //Buscar el 'tope' de la pila con respecto a los ID (parte izquierda) de la tabla
+                        while(in.hasNextLine()){
+
+                            linea = in.nextLine();
+                            info = linea.split(",");
+
+                            if(pila.get(pila.size()-1).toString().equals(info[0])){ //Si se encuentra el 'tope' de la pila en la tabla
+
+                                accion = info[indice];
+                                
+                            }
+
+                        }
+                        
+                        if(accion.equals("r0")){ //En caso de ser aceptada
+                            
+                            System.out.println("-> CADENA ACEPTADA");
+                            
+                        }else if(accion.isBlank()){ //En caso de ser negada
+                            
+                            System.out.println("-> CADENA NEGADA");
+                            
+                        }else if(accion.startsWith("d")){ //En caso de ser un 'desplazamiento' (agregar elementos a la pila)
+                            
+                            pila.add(entrada.get(0) + accion.substring(1));
+                            entrada.remove(0);
+                            
+                        }else if(accion.startsWith("r")){ //En caso de ser un 'reemplazo' (remplzar elementos de la pila)
+                            
+                            in = new Scanner(new FileReader(reglas)); //Abrir el fichero de texto con FileReader (Iniciador)
+                            
+                            boolean reglaEncontrada = false;
+                            String lineaRegla;
+                            int remover = 0;
+                            
+                            while(reglaEncontrada == false){
+                                
+                                lineaRegla = in.nextLine();
+                                
+                                if(lineaRegla.startsWith(accion.toUpperCase())){
+                                    
+                                    remover = lineaRegla.split("::=")[1].trim().split("\\s+").length * 2;
+                                    
+                                }
+                                
+                            }
+                            
+                            for(int i=pila.size()-1; i>pila.size()-remover; i--){
+                                
+                                pila.remove(i);
+                                
+                            }
+                            
+                        }
+                        
+                    }
+                
+            }
+            
+        }finally{
+            if(in!=null){ //En caso de estar abierto el documento
+                in.close(); //Cerrar el documento
+            }
+        }
+        
+        
+    } //Fin de método 'analisis'
     
 } //Fin de clase
