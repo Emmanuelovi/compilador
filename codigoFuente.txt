@@ -4,13 +4,10 @@
 
 int main(){
 	//Variables
-	int num1;
-	num1 = 5;
-	
-	int num2;
-	num2 = 8;
-	
-	int resultado;
-	resultado = num1 + num2;
+	int a;
+	a = 5;
+	while(a>0){
+		a=a+1;
+	}
 
 } //Fin de 'main'

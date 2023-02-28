@@ -23,7 +23,7 @@ import java.util.Scanner;
  */
 public class Compilador {
     
-    static ArrayList entrada = new ArrayList();
+    public static ArrayList entrada = new ArrayList();
     
     /**
      * @param args the command line arguments
@@ -33,6 +33,7 @@ public class Compilador {
         escritura(eliminarComentarios("codigoFuente.txt"), "codigoSinComentarios.txt");
         escritura(analisisLexico("codigoSinComentarios.txt"), "tokens.txt");
         escritura(separarTokens("tokens.txt"), "tokens.txt");
+        analisis("gramatica.csv", "reglas.txt");
         
     } //Fin de main
     
@@ -275,9 +276,9 @@ public class Compilador {
                     else if(esCadena == false){ //En caso de NO ser una cadena de texto (String)
 
                         separador = linea.split("\\s+"); //Elementos separados por espacios
-
+                        
                         for(int i=0; i<separador.length; i++){
-
+                            
                             if(separador[i].isBlank()==false){ //En caso de NO ser un elemento en blanco (validación)
                                 
                                 if(separador[i].matches("\\d+")){ //Numeros enteros
@@ -356,8 +357,6 @@ public class Compilador {
                             
                         }
                         
-                        entrada.add("$");
-
                     }
                     
                     if(esCadena){ //En caso de ser una cadena de texto (String)
@@ -368,6 +367,7 @@ public class Compilador {
                 
             }
             
+            entrada.add("$");
             return contenido;
             
         }finally{
@@ -380,18 +380,22 @@ public class Compilador {
     public static void analisis(String gramatica, String reglas) throws FileNotFoundException{
         //VARIABLES
         Scanner in = null; //Para leer el archivo de texto
+        Scanner in2 = null; //Para leer el archivo de texto
         String linea; //Para almacenar toda la linea en curso del archivo
         ArrayList pila = new ArrayList();
-        String accion = ""; //Para almacenar la acción que se está realizando por parte de la tabla (Elemento de tabla)
+        String accion = "A"; //Para almacenar la acción que se está realizando por parte de la tabla (Elemento de tabla)
         String [] info; //Para almacenar de manera separada cada elemento de una linea del archivo
         int indice = 0; //Para almacenar el indice de donde se encuentra un elemento dentro de la tabla (Indice solo en eje X - 'Horizontal')
         boolean existente = false; //Para conocer si el caracter buscado en la tabla existe o no en ella
+        boolean reglaEncontrada = false;
+        String lineaRegla = "";
+        int remover = 0;
         
         try{
             
             pila.add("0");
             
-            while(!accion.equals("accept") && !accion.equals("null")){ //Bucle hasta que la cadena sea aceptada o negada por la gramatica
+            while(!accion.equals("r0") && !accion.equals("")){ //Bucle hasta que la cadena sea aceptada o negada por la gramatica
                 
                 in = new Scanner(new FileReader(gramatica)); //Abrir el fichero de texto con FileReader (Iniciador)
                 
@@ -400,7 +404,7 @@ public class Compilador {
                     
                     //Buscar el primer caracter de la cadena de entrada con respecto al encabezado de la tabla
                     if(info[0].contains("NUMEROS")){
-
+                        
                         for(int i=1; i<info.length; i++){
 
                             if(entrada.get(0).toString().startsWith(info[i])){ //Si se encuentra el elemento
@@ -421,13 +425,13 @@ public class Compilador {
 
                             linea = in.nextLine();
                             info = linea.split(",");
-
-                            if(pila.get(pila.size()-1).toString().equals(info[0])){ //Si se encuentra el 'tope' de la pila en la tabla
+                            
+                            if(pila.get(pila.size()-1).equals(info[0])){ //Si se encuentra el 'tope' de la pila en la tabla
 
                                 accion = info[indice];
-                                
+                                break;
                             }
-
+                            
                         }
                         
                         if(accion.equals("r0")){ //En caso de ser aceptada
@@ -440,34 +444,71 @@ public class Compilador {
                             
                         }else if(accion.startsWith("d")){ //En caso de ser un 'desplazamiento' (agregar elementos a la pila)
                             
-                            pila.add(entrada.get(0) + accion.substring(1));
+                            pila.add(entrada.get(0));
+                            pila.add(accion.substring(1));
                             entrada.remove(0);
                             
                         }else if(accion.startsWith("r")){ //En caso de ser un 'reemplazo' (remplzar elementos de la pila)
                             
-                            in = new Scanner(new FileReader(reglas)); //Abrir el fichero de texto con FileReader (Iniciador)
-                            
-                            boolean reglaEncontrada = false;
-                            String lineaRegla;
-                            int remover = 0;
+                            in2 = new Scanner(new FileReader(reglas)); //Abrir el fichero de texto con FileReader (Iniciador)
                             
                             while(reglaEncontrada == false){
                                 
-                                lineaRegla = in.nextLine();
+                                lineaRegla = in2.nextLine();
                                 
                                 if(lineaRegla.startsWith(accion.toUpperCase())){
                                     
                                     remover = lineaRegla.split("::=")[1].trim().split("\\s+").length * 2;
+                                    reglaEncontrada = true;
                                     
                                 }
                                 
                             }
                             
-                            for(int i=pila.size()-1; i>pila.size()-remover; i--){
+                            int tam = pila.size();
+                            
+                            for(int i=tam-1; i>tam-remover; i--){
                                 
                                 pila.remove(i);
                                 
                             }
+                            
+                            in = new Scanner(new FileReader(gramatica)); //Abrir el fichero de texto con FileReader (Iniciador)
+                            in.nextLine();
+                            linea = in.nextLine();
+                            info = linea.split(",");
+                            
+                            if(info[0].contains("TEXTO")){
+                                
+                                lineaRegla = lineaRegla.split("::=")[0].split("\\s+")[1].replaceAll("><", "");
+
+                                for(int i=1; i<info.length; i++){
+
+                                    if(lineaRegla.equals(info[i])){ //Si se encuentra el elemento
+
+                                        pila.add(i-1);
+
+                                    }
+
+                                }
+
+                            }
+                            
+                            while(in.hasNextLine()){
+                                
+                                linea = in.nextLine();
+                                info = linea.split(",");
+                                
+                                if(pila.get(pila.size()-1).toString().contains(info[0])){ //Si se encuentra el 'tope' de la pila en la tabla
+
+                                    accion = info[indice];
+                                    break;
+                                    
+                                }
+
+                            }
+                            
+                            pila.add(accion);
                             
                         }
                         
