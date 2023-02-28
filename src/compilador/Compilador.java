@@ -367,7 +367,7 @@ public class Compilador {
                 
             }
             
-            entrada.add("$");
+            entrada.add("23");
             return contenido;
             
         }finally{
@@ -395,8 +395,8 @@ public class Compilador {
             
             pila.add("0");
             
-            while(!accion.equals("r0") && !accion.equals("")){ //Bucle hasta que la cadena sea aceptada o negada por la gramatica
-                
+            while(!accion.equals("r0") && !accion.equals("null")){ //Bucle hasta que la cadena sea aceptada o negada por la gramatica
+                System.out.println(pila.get(pila.size()-1));
                 in = new Scanner(new FileReader(gramatica)); //Abrir el fichero de texto con FileReader (Iniciador)
                 
                     linea = in.nextLine();
@@ -438,7 +438,7 @@ public class Compilador {
                             
                             System.out.println("-> CADENA ACEPTADA");
                             
-                        }else if(accion.isBlank()){ //En caso de ser negada
+                        }else if(accion.equals("null")){ //En caso de ser negada
                             
                             System.out.println("-> CADENA NEGADA");
                             
@@ -451,6 +451,7 @@ public class Compilador {
                         }else if(accion.startsWith("r")){ //En caso de ser un 'reemplazo' (remplzar elementos de la pila)
                             
                             in2 = new Scanner(new FileReader(reglas)); //Abrir el fichero de texto con FileReader (Iniciador)
+                            reglaEncontrada = false;
                             
                             while(reglaEncontrada == false){
                                 
@@ -465,11 +466,14 @@ public class Compilador {
                                 
                             }
                             
-                            int tam = pila.size();
-                            
-                            for(int i=tam-1; i>tam-remover; i--){
+                            if(!lineaRegla.split("::=")[1].trim().equals("e")){
+                                int tam = pila.size();
                                 
-                                pila.remove(i);
+                                for(int i=tam-1; i>=tam-remover; i--){
+
+                                    pila.remove(i);
+
+                                }
                                 
                             }
                             
@@ -480,14 +484,15 @@ public class Compilador {
                             
                             if(info[0].contains("TEXTO")){
                                 
-                                lineaRegla = lineaRegla.split("::=")[0].split("\\s+")[1].replaceAll("><", "");
-
+                                lineaRegla = lineaRegla.split("::=")[0].split("\\s+")[1].replaceAll(">|<", "");
+                                
                                 for(int i=1; i<info.length; i++){
 
                                     if(lineaRegla.equals(info[i])){ //Si se encuentra el elemento
 
                                         pila.add(i-1);
-
+                                        indice = i;
+                                        
                                     }
 
                                 }
@@ -499,17 +504,18 @@ public class Compilador {
                                 linea = in.nextLine();
                                 info = linea.split(",");
                                 
-                                if(pila.get(pila.size()-1).toString().contains(info[0])){ //Si se encuentra el 'tope' de la pila en la tabla
-
+                                if(pila.get(pila.size()-2).toString().equals(info[0])){ //Si se encuentra el 'tope' de la pila en la tabla
+                                    //System.out.println(info[0]);
+                                    //System.out.println(pila.get(pila.size()-2));
                                     accion = info[indice];
                                     break;
                                     
                                 }
 
                             }
-                            
+                            //System.out.println(pila.get(pila.size()-1));
                             pila.add(accion);
-                            
+                            //System.out.println(pila.get(pila.size()-1));
                         }
                         
                     }
@@ -519,6 +525,9 @@ public class Compilador {
         }finally{
             if(in!=null){ //En caso de estar abierto el documento
                 in.close(); //Cerrar el documento
+            }
+            if(in2!=null){ //En caso de estar abierto el documento
+                in2.close(); //Cerrar el documento
             }
         }
         
