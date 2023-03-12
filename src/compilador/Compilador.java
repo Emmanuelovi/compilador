@@ -1,10 +1,10 @@
 /*
  * Nombre: Compilador.java
- * Descripción: Analisis lexico
+ * Descripción: Analisis léxico, sintáctico y semántico
  * Autor: Aníbal Uriel Guijarro Rocha
  * Autor: Emmanuel Gómez Trujillo
  * Autor: Mario Alessandro López García
- * Fecha: 02 de Marzo de 2023
+ * Fecha: 12 de Marzo de 2023
  */
 package compilador;
 
@@ -410,7 +410,7 @@ public class Compilador {
             
             pila.add("0"); //Inicio de pila
             
-            while(!accion.equals("r0") && !accion.equals("null")){ //Bucle hasta que la cadena sea aceptada o negada por la gramatica
+            while(!accion.equals("r0")){ //Bucle hasta que la cadena sea aceptada o negada por la gramatica -- && !accion.equals("null")
                 //Imprimir pila y entrada en consola
                 System.out.println("");
                 System.out.print("\nPILA: " + pila);
@@ -459,7 +459,8 @@ public class Compilador {
 
                     }else if(accion.equals("null")){ //En caso de ser negada
 
-                        System.out.println("\n\n-> CADENA NEGADA");
+                        System.out.println("\n\n-> CADENA NEGADA (PANICO) <-");
+                        entrada.remove(0);
 
                     }else if(accion.startsWith("d")){ //En caso de ser un 'desplazamiento' (agregar elementos a la pila)
 
