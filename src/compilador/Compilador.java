@@ -24,8 +24,6 @@ import java.util.Scanner;
  */
 public class Compilador {
     
-    static ArrayList entrada = new ArrayList();
-    
     /**
      * @param args the command line arguments
      * @throws java.io.FileNotFoundException
@@ -38,7 +36,8 @@ public class Compilador {
         String [] informacion = separarTokens("tokens.txt"); //informacion[0] = contenido separado <---> informacion[1] = entrada (identificadores)
         
         escritura(informacion[0], "tokens.txt");
-        analisisSintactico("gramatica.csv", "reglas.txt", informacion[1]);
+        
+        creacionArbol(analisisSintactico("gramatica.csv", "reglas.txt", informacion[1]), "identificadores.txt");
         
     } //Fin de main
     
@@ -390,7 +389,7 @@ public class Compilador {
      * @param identificadores String que contiene la entrada (identificadores) de los tokens, lexemas y/o patrones
      * @throws FileNotFoundException 
      */
-    public static void analisisSintactico(String gramatica, String reglas, String identificadores) throws FileNotFoundException{
+    public static ArrayList analisisSintactico(String gramatica, String reglas, String identificadores) throws FileNotFoundException{
         //VARIABLES
         Scanner inGramatica = null; //Para leer el archivo de texto 'gramatica'
         Scanner inReglas = null; //Para leer el archivo de texto 'reglas'
@@ -405,12 +404,13 @@ public class Compilador {
         boolean reglaEncontrada; //Variable para saber si la regla (produccion) a sido encontrada en el archivo de 'reglas'
         String lineaRegla = ""; //Variable para almacenar la linea que contendrá la regla (produccion) completa
         int remover = 0; //Variable para almacenar el tamaño de elementos a eliminar de la pila (solo para reglas que comiencen con 'R')
+        ArrayList listaReglas = new ArrayList();
         
         try{
             
             pila.add("0"); //Inicio de pila
             
-            while(!accion.equals("r0")){ //Bucle hasta que la cadena sea aceptada o negada por la gramatica -- && !accion.equals("null")
+            while(!accion.equals("r0") && !accion.equals("fin")){ //Bucle hasta que la cadena sea aceptada o negada por la gramatica -- && !accion.equals("null")
                 //Imprimir pila y entrada en consola
                 System.out.println("");
                 System.out.print("\nPILA: " + pila);
@@ -460,7 +460,12 @@ public class Compilador {
                     }else if(accion.equals("null")){ //En caso de ser negada
 
                         System.out.println("\n\n-> CADENA NEGADA (PANICO) <-");
-                        entrada.remove(0);
+                        
+                        if(entrada.size()>1){
+                            entrada.remove(0);
+                        }else{
+                            accion = "fin";
+                        }
 
                     }else if(accion.startsWith("d")){ //En caso de ser un 'desplazamiento' (agregar elementos a la pila)
 
@@ -487,6 +492,7 @@ public class Compilador {
                         }
 
                         System.out.print("\nPRODUCCION: " + lineaRegla); //Imprimir la regla (produccion) en consola
+                        listaReglas.add(lineaRegla);
                         
                         if(!lineaRegla.split("::=")[1].trim().equals("e")){
                             int tam = pila.size(); //Tamaño de la pila
@@ -552,6 +558,87 @@ public class Compilador {
             }
         }
         
+        return listaReglas;
+        
     } //Fin de método 'analisisSintactico'
+    
+    public static void creacionArbol(ArrayList listaReglas, String archivo) throws FileNotFoundException{
+        
+        Scanner in = null;
+        Scanner in2 = null;
+        String linea = null;
+        Nodo raiz = new Nodo();
+        int identificador = 0;
+        ArrayList <Nodo> hijos = new ArrayList();
+        boolean raizExiste = false;
+        
+        try{
+            
+            for(int i=listaReglas.size()-1; i >= 0; i--){
+
+                in = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
+                linea = in.nextLine();
+            
+                while(in.hasNextLine()){
+                    
+                    if(listaReglas.get(i).toString().split(" ")[1].replace(">|<", "").equals(linea.split(" ")[0])){
+                        
+                        identificador = Integer.parseInt(linea.split(" ")[1]);
+                        
+                        for(int j=listaReglas.get(i).toString().split("::=")[1].split(" ").length; j>=0; j--){
+                            
+                            in2 = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
+                            linea = in.nextLine();
+                        
+                            while(in2.hasNextLine()){
+
+                                if(listaReglas.get(i).toString().split("::=")[1].split(" ")[j].equals(linea.split(" ")[0])){
+                                    
+                                    //Nodo nuevo = new Nodo(0);
+                                    
+                                    //hijos.add(nuevo); //linea.split(" ")[1]
+                                    break;
+                                    
+                                }
+
+                            }
+                            
+                        }
+                        
+                        break;
+                        
+                    }
+
+                }
+                
+                if(raizExiste==false){
+                    
+                    if(hijos.isEmpty()){
+                        raiz = new Nodo (identificador, null, null);
+                    }else{
+                        raiz = new Nodo (identificador, null, hijos);
+                        hijos.clear();
+                    }
+                    
+                }else{
+                    
+                    Nodo aux = raiz;
+                    
+                    //aux = new Nodo()
+                    
+                }
+
+            }
+        
+        }finally{
+            if(in!=null){ //En caso de estar abierto el documento
+                in.close(); //Cerrar el documento
+            }
+            if(in2!=null){ //En caso de estar abierto el documento
+                in2.close(); //Cerrar el documento
+            }
+        }
+        
+    } //Fin de método 'creacionArbol'
     
 } //Fin de clase
