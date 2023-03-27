@@ -4,7 +4,7 @@
  * Autor: Aníbal Uriel Guijarro Rocha
  * Autor: Emmanuel Gómez Trujillo
  * Autor: Mario Alessandro López García
- * Fecha: 23 de Marzo de 2023
+ * Fecha: 25 de Marzo de 2023
  */
 package compilador;
 
@@ -17,21 +17,23 @@ import java.util.ArrayList;
  */
 public class Nodo {
     //VARIABLES
-    int info;
-    Nodo padre;
-    ArrayList <Nodo> hijos = new ArrayList();
+    private int info;
+    private Nodo padre;
+    private ArrayList<Nodo> hijos = new ArrayList();
+    private String regla;
     
     //CONSTRUCTORES
     public Nodo(){
         this.info = 0;
         this.padre = null;
-        this.hijos = null;
+        this.regla = null;
     }
     
-    public Nodo(int info, Nodo padre, ArrayList hijos) {
+    public Nodo(int info, Nodo padre, ArrayList hijos, String regla) {
         this.info = info;
         this.padre = padre;
         this.hijos = hijos;
+        this.regla = regla;
     }
     
     //MÉTODOS
@@ -50,78 +52,30 @@ public class Nodo {
     public void setPadre(Nodo padre) {
         this.padre = padre;
     }
+    
+    public Nodo getHijoUnico(int indice){
+        return hijos.get(indice);
+    }
 
-    public ArrayList getHijos() {
+    public ArrayList<Nodo> getHijos() {
         return hijos;
     }
 
-    public void setHijos(ArrayList hijos) {
+    public void setHijoUnico(Nodo hijo) {
+        hijo.setPadre(this);
+        hijos.add(hijo);
+    }
+    
+    public void setHijos(ArrayList<Nodo> hijos) {
         this.hijos = hijos;
     }
     
-    /*
-    int info;
-    Nodo padre;
-    String tipo = "Terminal | No terminal";
-    
-    //VARIABLES
-    int info; //Información a almacenar en nodos (Identificadores)
-    Nodo terminal; //Nodo terminal hijo
-    Nodo noTerminal; //Nodo no terminal hijo
-    Nodo padre; //Nodo raíz (padre)
-    
-    //CONSTRUCTORES
-    public Nodo(){
-        this.info = 0;
-        this.terminal = null;
-        this.noTerminal = null;
-        this.padre = null;
+    public String getRegla(){
+        return regla;
     }
     
-    public Nodo(int info, Nodo terminal, Nodo noTerminal, Nodo padre){
-        this.info = info;
-        this.terminal = terminal;
-        this.noTerminal = noTerminal;
-        this.padre = padre;
+    public void setRegla(String regla){
+        this.regla = regla;
     }
     
-    //MÉTODOS
-    public int getInfo() {
-        return info;
-    }
-
-    public void setInfo(int info) {
-        this.info = info;
-    }
-
-    public Nodo getTerminal() {
-        return terminal;
-    }
-
-    public void setTerminal(Nodo terminal) {
-        this.terminal = terminal;
-    }
-
-    public Nodo getNoTerminal() {
-        return noTerminal;
-    }
-
-    public void setNoTerminal(Nodo noTerminal) {
-        this.noTerminal = noTerminal;
-    }
-
-    public Nodo getPadre() {
-        return padre;
-    }
-
-    public void setPadre(Nodo padre) {
-        this.padre = padre;
-    }
-    
-*/
-
-
-
-    
-
 } //Fin de clase

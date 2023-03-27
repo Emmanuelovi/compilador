@@ -4,7 +4,7 @@
  * Autor: Aníbal Uriel Guijarro Rocha
  * Autor: Emmanuel Gómez Trujillo
  * Autor: Mario Alessandro López García
- * Fecha: 12 de Marzo de 2023
+ * Fecha: 25 de Marzo de 2023
  */
 package compilador;
 
@@ -557,19 +557,18 @@ public class Compilador {
                 inReglas.close(); //Cerrar el documento
             }
         }
-        
+        //System.out.println(listaReglas);
         return listaReglas;
         
     } //Fin de método 'analisisSintactico'
     
     public static void creacionArbol(ArrayList listaReglas, String archivo) throws FileNotFoundException{
-        
+        //VARIABLES
         Scanner in = null;
         Scanner in2 = null;
-        String linea = null;
+        String linea;
         Nodo raiz = new Nodo();
         int identificador = 0;
-        ArrayList <Nodo> hijos = new ArrayList();
         boolean raizExiste = false;
         
         try{
@@ -577,26 +576,57 @@ public class Compilador {
             for(int i=listaReglas.size()-1; i >= 0; i--){
 
                 in = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
-                linea = in.nextLine();
             
                 while(in.hasNextLine()){
                     
-                    if(listaReglas.get(i).toString().split(" ")[1].replace(">|<", "").equals(linea.split(" ")[0])){
+                    linea = in.nextLine();
+                    
+                    if(listaReglas.get(i).toString().split(" ")[1].replaceAll(">|<", "").equals(linea.split(" ")[0])){
                         
                         identificador = Integer.parseInt(linea.split(" ")[1]);
                         
-                        for(int j=listaReglas.get(i).toString().split("::=")[1].split(" ").length; j>=0; j--){
+                        for(int j=0; j<listaReglas.get(i).toString().split("::=")[1].trim().split(" ").length; j++){ //int j=listaReglas.get(i).toString().split("::=")[1].trim().split(" ").length; j>0; j--
                             
                             in2 = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
-                            linea = in.nextLine();
-                        
+                            
                             while(in2.hasNextLine()){
-
-                                if(listaReglas.get(i).toString().split("::=")[1].split(" ")[j].equals(linea.split(" ")[0])){
+                                
+                                linea = in2.nextLine();
+                                
+                                if(listaReglas.get(i).toString().split("::=")[1].trim().split(" ")[j].replaceAll(">|<", "").equals(linea.split(" ")[0])){
                                     
-                                    //Nodo nuevo = new Nodo(0);
+                                    if(raizExiste==false){
+                                        //FALTANTE
+                                        
+                                        if(i==0){
+                                            raiz.setHijoUnico(new Nodo(Integer.parseInt(linea.split(" ")[1]), raiz, null, null));
+                                        }else{
+                                            raiz.setHijoUnico(new Nodo(Integer.parseInt(linea.split(" ")[1]), raiz, null, listaReglas.get(i-1).toString()));
+                                        }
+                                        
+                                        raiz.setInfo(identificador);
+                                        raiz.setRegla(listaReglas.get(i).toString());
+                                        raizExiste = true;
+                                        
+                                    }else{
+                                        //FALTANTE
+                                        
+                                        Nodo prueba = busquedaPreordenInverso(raiz, identificador);
+                                        //System.out.println(prueba.getInfo() + "AQUI ES");
+                                        //System.out.println(busquedaPreordenInverso(raiz, identificador).setHijos(raiz) + " HOLA");
+                                        
+                                        //System.out.println(prueba.getInfo() + " - AQUI - " + prueba.getHijos());
+                                        //System.out.println(linea.split(" ")[1]);
+                                        if(i==0){
+                                            prueba.setHijoUnico(new Nodo(Integer.parseInt(linea.split(" ")[1]), prueba, null, null));
+                                        }else{
+                                            prueba.setHijoUnico(new Nodo(Integer.parseInt(linea.split(" ")[1]), prueba, null, listaReglas.get(i-1).toString()));
+                                        }
+                                        
+                                        prueba.setRegla(listaReglas.get(i).toString());
+                                        
+                                    }
                                     
-                                    //hijos.add(nuevo); //linea.split(" ")[1]
                                     break;
                                     
                                 }
@@ -609,23 +639,6 @@ public class Compilador {
                         
                     }
 
-                }
-                
-                if(raizExiste==false){
-                    
-                    if(hijos.isEmpty()){
-                        raiz = new Nodo (identificador, null, null);
-                    }else{
-                        raiz = new Nodo (identificador, null, hijos);
-                        hijos.clear();
-                    }
-                    
-                }else{
-                    
-                    Nodo aux = raiz;
-                    
-                    //aux = new Nodo()
-                    
                 }
 
             }
@@ -640,5 +653,94 @@ public class Compilador {
         }
         
     } //Fin de método 'creacionArbol'
+    
+    public static void preorden(Nodo actual) {
+        if (actual == null) {
+            return;
+        }
+
+        System.out.println(actual.getInfo());
+
+        if(actual.getHijos()!=null){
+            for (Nodo hijos : actual.getHijos()) {
+                preorden(hijos);
+            }
+        }
+        
+    }
+    
+    public static void preordenInverso(Nodo actual) {
+        if (actual == null) {
+            return;
+        }
+
+        System.out.println(actual.getInfo());
+        
+        ArrayList<Nodo> hijos = actual.getHijos();
+
+        if(hijos != null){
+            for(int i=hijos.size()-1; i>=0; i--){
+                preordenInverso(hijos.get(i));
+            }
+        }
+        
+    }
+    
+//    public static boolean busquedaPreordenInverso(Nodo actual, int valorBuscado) {
+//        if (actual == null) {
+//            return false;
+//        }
+//
+//        // Busca el nodo actual
+//        if (actual.getInfo() == valorBuscado && actual.getHijos()==null) {
+//            return true;
+//        }
+//
+//        ArrayList<Nodo> hijos = actual.getHijos();
+//        if (hijos != null) {
+//            // Recorre los hijos en orden inverso
+//            for (int i = hijos.size() - 1; i >= 0; i--) {
+//                // Busca el nodo en cada uno de los hijos recursivamente
+//                boolean result = busquedaPreordenInverso(hijos.get(i), valorBuscado);
+//                
+//                if (result) {
+//                    return true;
+//                }
+//                
+//            }
+//        }
+//        return false;
+//    }
+
+    public static Nodo busquedaPreordenInverso(Nodo actual, int valorBuscado) {
+        if (actual == null) {
+            return null;
+        }
+
+        // Busca el nodo actual
+        if (actual.getInfo()==valorBuscado) { //|| actual.getRegla().split("::=")[1].trim().split("<").length > actual.getHijos().size()
+            
+            if(actual.getRegla()!=null && (actual.getHijos()==null || actual.getRegla().split("::=")[1].trim().split("<").length > actual.getHijos().size())){
+                return actual;
+            }
+            
+        }
+
+        ArrayList<Nodo> children = actual.getHijos();
+        if (children != null) {
+            // Recorre los hijos en orden inverso
+            for (int i = children.size() - 1; i >= 0; i--) {
+                // Busca el nodo en cada uno de los hijos recursivamente
+                Nodo result = busquedaPreordenInverso(children.get(i), valorBuscado);
+                if (result != null) {
+                    ArrayList<Nodo> nuevo = new ArrayList();
+                    result.setHijos(nuevo);
+                    return result;
+                }
+            }
+        }
+
+        return null;
+    }
     
 } //Fin de clase
