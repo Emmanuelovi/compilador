@@ -36,7 +36,6 @@ public class Compilador {
         String [] informacion = separarTokens("tokens.txt"); //informacion[0] = contenido separado <---> informacion[1] = entrada (identificadores)
         
         escritura(informacion[0], "tokens.txt");
-        
         creacionArbol(analisisSintactico("gramatica.csv", "reglas.txt", informacion[1]), "identificadores.txt");
         
     } //Fin de main
@@ -584,6 +583,7 @@ public class Compilador {
                     if(listaReglas.get(i).toString().split(" ")[1].replaceAll(">|<", "").equals(linea.split(" ")[0])){
                         
                         identificador = Integer.parseInt(linea.split(" ")[1]);
+                        ArrayList<Nodo> hijos = new ArrayList();
                         
                         for(int j=0; j<listaReglas.get(i).toString().split("::=")[1].trim().split(" ").length; j++){ //int j=listaReglas.get(i).toString().split("::=")[1].trim().split(" ").length; j>0; j--
                             
@@ -595,37 +595,7 @@ public class Compilador {
                                 
                                 if(listaReglas.get(i).toString().split("::=")[1].trim().split(" ")[j].replaceAll(">|<", "").equals(linea.split(" ")[0])){
                                     
-                                    if(raizExiste==false){
-                                        //FALTANTE
-                                        
-                                        if(i==0){
-                                            raiz.setHijoUnico(new Nodo(Integer.parseInt(linea.split(" ")[1]), raiz, null, null));
-                                        }else{
-                                            raiz.setHijoUnico(new Nodo(Integer.parseInt(linea.split(" ")[1]), raiz, null, listaReglas.get(i-1).toString()));
-                                        }
-                                        
-                                        raiz.setInfo(identificador);
-                                        raiz.setRegla(listaReglas.get(i).toString());
-                                        raizExiste = true;
-                                        
-                                    }else{
-                                        //FALTANTE
-                                        
-                                        Nodo prueba = busquedaPreordenInverso(raiz, identificador);
-                                        //System.out.println(prueba.getInfo() + "AQUI ES");
-                                        //System.out.println(busquedaPreordenInverso(raiz, identificador).setHijos(raiz) + " HOLA");
-                                        
-                                        //System.out.println(prueba.getInfo() + " - AQUI - " + prueba.getHijos());
-                                        //System.out.println(linea.split(" ")[1]);
-                                        if(i==0){
-                                            prueba.setHijoUnico(new Nodo(Integer.parseInt(linea.split(" ")[1]), prueba, null, null));
-                                        }else{
-                                            prueba.setHijoUnico(new Nodo(Integer.parseInt(linea.split(" ")[1]), prueba, null, listaReglas.get(i-1).toString()));
-                                        }
-                                        
-                                        prueba.setRegla(listaReglas.get(i).toString());
-                                        
-                                    }
+                                    hijos.add(new Nodo(Integer.parseInt(linea.split(" ")[1]), null, new ArrayList()));
                                     
                                     break;
                                     
@@ -634,6 +604,33 @@ public class Compilador {
                             }
                             
                         }
+                        if(raizExiste==false){
+                            raiz.setHijos(hijos);
+                            raiz.setInfo(identificador);
+                            raizExiste = true;
+                            
+                            for(int j=0; j<hijos.size()-1; j++){
+                                
+                                hijos.get(j).setPadre(raiz);
+                                
+                            }
+                            
+
+                        }else{
+                            Nodo prueba = busquedaPreordenInverso(raiz, identificador);
+                            
+                            prueba.setHijos(hijos);
+                            
+                            for(int j=0; j<hijos.size()-1; j++){
+                                
+                                hijos.get(j).setPadre(prueba);
+                                
+                            }
+                            
+                            
+
+                        }
+                        
                         
                         break;
                         
@@ -642,6 +639,8 @@ public class Compilador {
                 }
 
             }
+            
+            preorden(raiz);
         
         }finally{
             if(in!=null){ //En caso de estar abierto el documento
@@ -654,23 +653,25 @@ public class Compilador {
         
     } //Fin de método 'creacionArbol'
     
-    public static void preorden(Nodo actual) {
-        if (actual == null) {
+    
+    
+    public static void preorden(Nodo actual){
+        if (actual == null){
             return;
         }
 
         System.out.println(actual.getInfo());
 
         if(actual.getHijos()!=null){
-            for (Nodo hijos : actual.getHijos()) {
+            for (Nodo hijos : actual.getHijos()){
                 preorden(hijos);
             }
         }
         
     }
     
-    public static void preordenInverso(Nodo actual) {
-        if (actual == null) {
+    public static void preordenInverso(Nodo actual){
+        if (actual == null){
             return;
         }
 
@@ -712,27 +713,25 @@ public class Compilador {
 //        return false;
 //    }
 
-    public static Nodo busquedaPreordenInverso(Nodo actual, int valorBuscado) {
-        if (actual == null) {
-            return null;
+    public static Nodo busquedaPreordenInverso(Nodo actual, int valorBuscado){
+        if (actual == null){
+            return null; //No se encontró
         }
 
         // Busca el nodo actual
-        if (actual.getInfo()==valorBuscado) { //|| actual.getRegla().split("::=")[1].trim().split("<").length > actual.getHijos().size()
+        if (actual.getInfo()==valorBuscado && actual.getHijos().isEmpty()){ //|| actual.getRegla().split("::=")[1].trim().split("<").length > actual.getHijos().size()
             
-            if(actual.getRegla()!=null && (actual.getHijos()==null || actual.getRegla().split("::=")[1].trim().split("<").length > actual.getHijos().size())){
-                return actual;
-            }
+            return actual;
             
         }
 
         ArrayList<Nodo> children = actual.getHijos();
-        if (children != null) {
+        if (children != null){
             // Recorre los hijos en orden inverso
-            for (int i = children.size() - 1; i >= 0; i--) {
+            for (int i = children.size() - 1; i >= 0; i--){
                 // Busca el nodo en cada uno de los hijos recursivamente
                 Nodo result = busquedaPreordenInverso(children.get(i), valorBuscado);
-                if (result != null) {
+                if (result != null){
                     ArrayList<Nodo> nuevo = new ArrayList();
                     result.setHijos(nuevo);
                     return result;
