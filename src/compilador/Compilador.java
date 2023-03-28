@@ -4,7 +4,7 @@
  * Autor: Aníbal Uriel Guijarro Rocha
  * Autor: Emmanuel Gómez Trujillo
  * Autor: Mario Alessandro López García
- * Fecha: 25 de Marzo de 2023
+ * Fecha: 28 de Marzo de 2023
  */
 package compilador;
 
@@ -37,7 +37,6 @@ public class Compilador {
         
         escritura(informacion[0], "tokens.txt");
         creacionArbol(analisisSintactico("gramatica.csv", "reglas.txt", informacion[1]), "identificadores.txt");
-        
     } //Fin de main
     
     //MÉTODOS
@@ -403,7 +402,7 @@ public class Compilador {
         boolean reglaEncontrada; //Variable para saber si la regla (produccion) a sido encontrada en el archivo de 'reglas'
         String lineaRegla = ""; //Variable para almacenar la linea que contendrá la regla (produccion) completa
         int remover = 0; //Variable para almacenar el tamaño de elementos a eliminar de la pila (solo para reglas que comiencen con 'R')
-        ArrayList listaReglas = new ArrayList();
+        ArrayList listaReglas = new ArrayList(); //Almacenamiento de reglas generadas en análisis sintáctico para la creción del árbol
         
         try{
             
@@ -561,18 +560,24 @@ public class Compilador {
         
     } //Fin de método 'analisisSintactico'
     
+    /**
+     * Método para la creación del árbol sintáctico. Con la lista de reglas obtenidas del análisis sintáctico
+     * @param listaReglas Reglas obtenidas del análisis sintáctico
+     * @param archivo Nombre del archivo que contiene lo indices de cada token, lexema o patrón 
+     * @throws FileNotFoundException 
+     */
     public static void creacionArbol(ArrayList listaReglas, String archivo) throws FileNotFoundException{
         //VARIABLES
-        Scanner in = null;
-        Scanner in2 = null;
-        String linea;
-        Nodo raiz = new Nodo();
-        int identificador = 0;
-        boolean raizExiste = false;
+        Scanner in = null; //Lectura de datos del archivo
+        Scanner in2 = null; //Segunda lectura de datos del archivo
+        String linea; //Para almacenar los que contiene cada linea del archivo
+        Nodo raiz = new Nodo(); //Creación del Nodo raíz del padre con valores nulos (inicializado)
+        int identificador = 0; //Almacenar la información que tendrá cada uno de los nodos del árbol sintáctico
+        boolean raizExiste = false; //Para conocer si ya se referenció el nodo raíz
         
         try{
             
-            for(int i=listaReglas.size()-1; i >= 0; i--){
+            for(int i=listaReglas.size()-1; i>=0; i--){
 
                 in = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
             
@@ -582,8 +587,8 @@ public class Compilador {
                     
                     if(listaReglas.get(i).toString().split(" ")[1].replaceAll(">|<", "").equals(linea.split(" ")[0])){
                         
-                        identificador = Integer.parseInt(linea.split(" ")[1]);
-                        ArrayList<Nodo> hijos = new ArrayList();
+                        identificador = Integer.parseInt(linea.split(" ")[1]); //Almacenar la información que tendrá el nodo que será creado
+                        ArrayList<Nodo> hijos = new ArrayList(); //Creación de ArrayList para almacenar los hijos de cada uno de los nodos creados
                         
                         for(int j=0; j<listaReglas.get(i).toString().split("::=")[1].trim().split(" ").length; j++){ //int j=listaReglas.get(i).toString().split("::=")[1].trim().split(" ").length; j>0; j--
                             
@@ -595,7 +600,7 @@ public class Compilador {
                                 
                                 if(listaReglas.get(i).toString().split("::=")[1].trim().split(" ")[j].replaceAll(">|<", "").equals(linea.split(" ")[0])){
                                     
-                                    hijos.add(new Nodo(Integer.parseInt(linea.split(" ")[1]), null, new ArrayList()));
+                                    hijos.add(new Nodo(Integer.parseInt(linea.split(" ")[1]), null, new ArrayList())); //Almacenar de cada uno de los hijos en el ArrayList 
                                     
                                     break;
                                     
@@ -605,32 +610,39 @@ public class Compilador {
                             
                         }
                         if(raizExiste==false){
-                            raiz.setHijos(hijos);
-                            raiz.setInfo(identificador);
-                            raizExiste = true;
+                            raiz.setHijos(hijos); //Agregar los hijos del nodo raíz
+                            raiz.setInfo(identificador); //Establecer la información que tendrá el nodo raíz
+                            raizExiste = true; //Marcar como nodo raíz creado (existente)
                             
                             for(int j=0; j<hijos.size()-1; j++){
                                 
-                                hijos.get(j).setPadre(raiz);
+                                hijos.get(j).setPadre(raiz); //Referenciar al padre en cada uno de los nodos hijos
                                 
                             }
                             
 
                         }else{
-                            Nodo prueba = busquedaPreordenInverso(raiz, identificador);
+                            Nodo buscado = busquedaPreordenInverso(raiz, identificador); //Buscar al nodo en donde se le insertarán los hijos
                             
-                            prueba.setHijos(hijos);
-                            
-                            for(int j=0; j<hijos.size()-1; j++){
+                            if(buscado==null){
                                 
-                                hijos.get(j).setPadre(prueba);
+                                System.out.println("ERROR -> Árbol no puede ser creado por error en sintaxis");
+                                i=-1;
+                                break;
+                                
+                            }else{
+                                
+                                buscado.setHijos(hijos); //Agregar los hijos al nodo
+                            
+                                for(int j=0; j<hijos.size()-1; j++){
+
+                                    hijos.get(j).setPadre(buscado); //Referencia al padre en cada uno de los nodos hijos
+
+                                }
                                 
                             }
-                            
-                            
 
                         }
-                        
                         
                         break;
                         
@@ -640,6 +652,7 @@ public class Compilador {
 
             }
             
+            System.out.println("\n-> RECORRIDO PREORDEN DE ARBOL SINTACTICO <-\n");
             preorden(raiz);
         
         }finally{
@@ -653,8 +666,10 @@ public class Compilador {
         
     } //Fin de método 'creacionArbol'
     
-    
-    
+    /**
+     * Método para recorrer el árbol sintáctico de manera preorden (izquierda a derecha)
+     * @param actual Nodo raíz del árbol
+     */
     public static void preorden(Nodo actual){
         if (actual == null){
             return;
@@ -668,8 +683,12 @@ public class Compilador {
             }
         }
         
-    }
+    } //Fin de método 'preorden'
     
+    /**
+     * Método para recorrer el árbol sintáctico de manera preorden inverso (derecha a izquierda)
+     * @param actual 
+     */
     public static void preordenInverso(Nodo actual){
         if (actual == null){
             return;
@@ -685,7 +704,7 @@ public class Compilador {
             }
         }
         
-    }
+    } //Fin de método 'preordenInverso'
     
 //    public static boolean busquedaPreordenInverso(Nodo actual, int valorBuscado) {
 //        if (actual == null) {
@@ -713,13 +732,19 @@ public class Compilador {
 //        return false;
 //    }
 
+    /**
+     * Método para buscar un nodo con el valor especificado que no contenga nodos hijos (funciona para saber donde continúa la inserción de los siguienteshijos)
+     * @param actual Nodo raíz del árbol para comenzar la búsqueda
+     * @param valorBuscado Valor a ser buscado entre los nodos del árbol
+     * @return Nodo con el valor especificado y que no tiene hijos; en caso contrario, retorna null
+     */
     public static Nodo busquedaPreordenInverso(Nodo actual, int valorBuscado){
         if (actual == null){
             return null; //No se encontró
         }
 
         // Busca el nodo actual
-        if (actual.getInfo()==valorBuscado && actual.getHijos().isEmpty()){ //|| actual.getRegla().split("::=")[1].trim().split("<").length > actual.getHijos().size()
+        if (actual.getInfo()==valorBuscado && actual.getHijos().isEmpty()){
             
             return actual;
             
@@ -730,16 +755,16 @@ public class Compilador {
             // Recorre los hijos en orden inverso
             for (int i = children.size() - 1; i >= 0; i--){
                 // Busca el nodo en cada uno de los hijos recursivamente
-                Nodo result = busquedaPreordenInverso(children.get(i), valorBuscado);
-                if (result != null){
+                Nodo resultado = busquedaPreordenInverso(children.get(i), valorBuscado);
+                if (resultado != null){
                     ArrayList<Nodo> nuevo = new ArrayList();
-                    result.setHijos(nuevo);
-                    return result;
+                    resultado.setHijos(nuevo);
+                    return resultado;
                 }
             }
         }
 
         return null;
-    }
+    } //Fin de método 'busquedaPreordenInverso'
     
 } //Fin de clase
