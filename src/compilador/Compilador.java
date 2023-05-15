@@ -4,7 +4,7 @@
  * Autor: Aníbal Uriel Guijarro Rocha
  * Autor: Emmanuel Gómez Trujillo
  * Autor: Mario Alessandro López García
- * Fecha: 28 de Marzo de 2023
+ * Fecha: 14 de Mayo de 2023
  */
 package compilador;
 
@@ -24,6 +24,8 @@ import java.util.Scanner;
  */
 public class Compilador {
     
+    static boolean panico = false; //Para identificar si existe un error sintactico o no
+    
     /**
      * @param args the command line arguments
      * @throws java.io.FileNotFoundException
@@ -37,6 +39,10 @@ public class Compilador {
         
         escritura(informacion[0], "tokens.txt");
         creacionArbol(analisisSintactico("gramatica.csv", "reglas.txt", informacion[1]), "identificadores.txt");
+        
+        
+        analisisSemantico("tokens.txt");
+        
     } //Fin de main
     
     //MÉTODOS
@@ -271,7 +277,7 @@ public class Compilador {
                     }
                     else if(linea.startsWith("\"") && esCadena){ //En caso de terminar una cadena de texto (String)
                         esCadena = false;
-                        contenido = contenido + linea + " STRING\n"; //Terminar el String con retorno
+                        contenido = contenido + linea + " 3\n"; //Terminar el String con retorno
                     }
                     else if(esCadena == false){ //En caso de NO ser una cadena de texto (String)
 
@@ -458,6 +464,7 @@ public class Compilador {
                     }else if(accion.equals("null")){ //En caso de ser negada
 
                         System.out.println("\n\n-> CADENA NEGADA (PANICO) <-");
+                        panico = true;
                         
                         if(entrada.size()>1){
                             entrada.remove(0);
@@ -555,7 +562,7 @@ public class Compilador {
                 inReglas.close(); //Cerrar el documento
             }
         }
-        //System.out.println(listaReglas);
+        
         return listaReglas;
         
     } //Fin de método 'analisisSintactico'
@@ -577,83 +584,89 @@ public class Compilador {
         
         try{
             
-            for(int i=listaReglas.size()-1; i>=0; i--){
+            if(!panico){
+                
+                for(int i=listaReglas.size()-1; i>=0; i--){
 
-                in = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
-            
-                while(in.hasNextLine()){
-                    
-                    linea = in.nextLine();
-                    
-                    if(listaReglas.get(i).toString().split(" ")[1].replaceAll(">|<", "").equals(linea.split(" ")[0])){
-                        
-                        identificador = Integer.parseInt(linea.split(" ")[1]); //Almacenar la información que tendrá el nodo que será creado
-                        ArrayList<Nodo> hijos = new ArrayList(); //Creación de ArrayList para almacenar los hijos de cada uno de los nodos creados
-                        
-                        for(int j=0; j<listaReglas.get(i).toString().split("::=")[1].trim().split(" ").length; j++){ //int j=listaReglas.get(i).toString().split("::=")[1].trim().split(" ").length; j>0; j--
-                            
-                            in2 = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
-                            
-                            while(in2.hasNextLine()){
-                                
-                                linea = in2.nextLine();
-                                
-                                if(listaReglas.get(i).toString().split("::=")[1].trim().split(" ")[j].replaceAll(">|<", "").equals(linea.split(" ")[0])){
-                                    
-                                    hijos.add(new Nodo(Integer.parseInt(linea.split(" ")[1]), null, new ArrayList())); //Almacenar de cada uno de los hijos en el ArrayList 
-                                    
-                                    break;
-                                    
+                    in = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
+
+                    while(in.hasNextLine()){
+
+                        linea = in.nextLine();
+
+                        if(listaReglas.get(i).toString().split(" ")[1].replaceAll(">|<", "").equals(linea.split(" ")[0])){
+
+                            identificador = Integer.parseInt(linea.split(" ")[1]); //Almacenar la información que tendrá el nodo que será creado
+                            ArrayList<Nodo> hijos = new ArrayList(); //Creación de ArrayList para almacenar los hijos de cada uno de los nodos creados
+
+                            for(int j=0; j<listaReglas.get(i).toString().split("::=")[1].trim().split(" ").length; j++){ //int j=listaReglas.get(i).toString().split("::=")[1].trim().split(" ").length; j>0; j--
+
+                                in2 = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
+
+                                while(in2.hasNextLine()){
+
+                                    linea = in2.nextLine();
+
+                                    if(listaReglas.get(i).toString().split("::=")[1].trim().split(" ")[j].replaceAll(">|<", "").equals(linea.split(" ")[0])){
+
+                                        hijos.add(new Nodo(Integer.parseInt(linea.split(" ")[1]), null, new ArrayList())); //Almacenar de cada uno de los hijos en el ArrayList 
+
+                                        break;
+
+                                    }
+
                                 }
 
                             }
-                            
-                        }
-                        if(raizExiste==false){
-                            raiz.setHijos(hijos); //Agregar los hijos del nodo raíz
-                            raiz.setInfo(identificador); //Establecer la información que tendrá el nodo raíz
-                            raizExiste = true; //Marcar como nodo raíz creado (existente)
-                            
-                            for(int j=0; j<hijos.size()-1; j++){
-                                
-                                hijos.get(j).setPadre(raiz); //Referenciar al padre en cada uno de los nodos hijos
-                                
-                            }
-                            
+                            if(raizExiste==false){
+                                raiz.setHijos(hijos); //Agregar los hijos del nodo raíz
+                                raiz.setInfo(identificador); //Establecer la información que tendrá el nodo raíz
+                                raizExiste = true; //Marcar como nodo raíz creado (existente)
 
-                        }else{
-                            Nodo buscado = busquedaPreordenInverso(raiz, identificador); //Buscar al nodo en donde se le insertarán los hijos
-                            
-                            if(buscado==null){
-                                
-                                System.out.println("ERROR -> Árbol no puede ser creado por error en sintaxis");
-                                i=-1;
-                                break;
-                                
-                            }else{
-                                
-                                buscado.setHijos(hijos); //Agregar los hijos al nodo
-                            
                                 for(int j=0; j<hijos.size()-1; j++){
 
-                                    hijos.get(j).setPadre(buscado); //Referencia al padre en cada uno de los nodos hijos
+                                    hijos.get(j).setPadre(raiz); //Referenciar al padre en cada uno de los nodos hijos
 
                                 }
-                                
+
+
+                            }else{
+                                Nodo buscado = busquedaPreordenInverso(raiz, identificador); //Buscar al nodo en donde se le insertarán los hijos
+
+                                if(buscado==null){
+
+                                    System.out.println("ERROR -> Árbol no puede ser creado por error en sintaxis");
+                                    i=-1;
+                                    break;
+
+                                }else{
+
+                                    buscado.setHijos(hijos); //Agregar los hijos al nodo
+
+                                    for(int j=0; j<hijos.size()-1; j++){
+
+                                        hijos.get(j).setPadre(buscado); //Referencia al padre en cada uno de los nodos hijos
+
+                                    }
+
+                                }
+
                             }
 
+                            break;
+
                         }
-                        
-                        break;
-                        
+
                     }
 
                 }
 
-            }
+                System.out.println("\n-> RECORRIDO PREORDEN DE ARBOL SINTACTICO <-\n");
+                preorden(raiz);
             
-            System.out.println("\n-> RECORRIDO PREORDEN DE ARBOL SINTACTICO <-\n");
-            preorden(raiz);
+            }else{
+                System.out.println("\n>> ARBOL SINTACTICO NO SE PUEDE CREAR POR ERRORES (PANICO)");
+            }
         
         }finally{
             if(in!=null){ //En caso de estar abierto el documento
@@ -665,6 +678,217 @@ public class Compilador {
         }
         
     } //Fin de método 'creacionArbol'
+    
+    /**
+     * Método para el analisis semántico del código fuente, analiza si todas las variables están declaradas (y se manejan) de manera correcta
+     * @param archivo Nombre del archivo a leer (en este caso, el código ya separado cen tokens)
+     * @throws FileNotFoundException 
+     */
+    public static void analisisSemantico(String archivo) throws FileNotFoundException{
+        //VARIABLES
+        Scanner in = null; //Variable para leer el archivo txt
+        String linea; //Variable que almacenará la línea en curso del archivo que se está leyendo
+        ArrayList variables = new ArrayList(); //Estructura para guardar las variables del programa
+        ArrayList tipoDato = new ArrayList(); //Estructura para guardar los tipos de datos de cada variable del programa
+        int contador = 0; //Contador de linea
+        String tDato = ""; //Tipo de dato de las lineas (para asignarles el tipo a las variables)
+        String variable = ""; //Nombre de la variable a almacenar o identificar errores
+        boolean error = false; //Variable para identificar errores y salir de while (bandera)
+        String valor1 = ""; //Primer valor en la asignación de valores a variables
+        String valor2 = ""; //Segundo valor en la asignación de valores a variables
+        String operacion = ""; //Operación que se realiza en el programa (suma o multiplicacion)
+        boolean declaracion = false; //Para identificar si se trata de una declaración de variables durante el analisis
+        
+        try{
+            
+            if(!panico){
+
+                in = new Scanner(new FileReader(archivo)); //Abrir el fichero de texto con FileReader (Iniciador)
+
+                System.out.println("\nANALISIS SEMANTICO");
+
+                while(in.hasNextLine() && error!=true){
+
+                    linea = in.nextLine();
+                    contador++;
+
+                    if(linea.isBlank()==false){
+
+                        if(!linea.split(" ")[0].equals("int") && contador==1){
+
+                            System.out.println("ERROR - Creación de main incorrecto");
+                            error = true;
+
+                        }else if(!linea.split(" ")[0].equals("main") && contador==2){
+
+                            System.out.println("ERROR - Creación de main incorrecto");
+                            error = true;
+
+                        }else if(contador>2){
+
+                            if(linea.split(" ")[1].equals("4")){
+
+                                tDato = linea.split(" ")[0];
+                                declaracion = true;
+
+                            }else if(linea.split(" ")[1].equals("0") && !tDato.equals("") && declaracion!=false){
+
+                                if(variables.contains(linea.split(" ")[0])){
+
+                                    System.out.println("ERROR - Variable ya declarada anteriormente");
+                                    error = true;
+
+                                }else{
+
+                                    variables.add(linea.split(" ")[0]);
+                                    tipoDato.add(tDato);
+
+                                }
+
+                            }else if(linea.split(" ")[0].equals(".") && !variable.equals("")){
+
+                                System.out.println("ERROR - El tipo de dato asignado es incorrecto");
+                                error = true;
+
+                            }else if(linea.split(" ")[1].equals("0") && tDato.equals("") && variable.equals("")){
+
+                                if(!variables.contains(linea.split(" ")[0])){
+                                    System.out.println("ERROR - La variable no a sido declarada");
+                                    error = true;
+                                }
+
+                                variable = linea.split(" ")[0];
+
+                            }else if(((linea.split(" ")[1].equals("1") || linea.split(" ")[linea.split(" ").length-1].equals("3")) && !variable.equals("")) && valor1.equals("")){
+
+                                valor1 = linea.split(" ")[0];
+
+                            }else if(((linea.split(" ")[1].equals("1") || linea.split(" ")[1].equals("3")) && !variable.equals("")) && !valor1.equals("")){
+
+                                valor2 = linea.split(" ")[0];
+
+                            }else if(linea.split(" ")[1].equals("5")){
+                                operacion = "suma";
+                            }else if(linea.split(" ")[1].equals("6")){
+                                operacion = "multiplicacion";
+                            }else if(linea.split(" ")[1].equals("0") && !variable.equals("")){
+
+                                if(!variables.contains(linea.split(" ")[0])){
+                                    System.out.println("ERROR - La variable no a sido declarada");
+                                    error = true;
+                                }else if(!tipoDato.get(variables.indexOf(variable)).equals(tipoDato.get(variables.indexOf(linea.split(" ")[0])))){
+
+                                    System.out.println("ERROR - El tipo de dato asignado es incorrecto");
+                                    error = true;
+
+                                }
+
+                            }else if(!valor1.equals("") && valor2.equals("")){
+
+                                String aux = "";
+
+                                if(valor1.startsWith("\"")){
+                                    aux = "String";
+                                }else if(valor1.matches("^[-+]?[0-9]+$")){
+                                    aux = "int";
+                                }else{
+                                    System.out.println("ERROR - El tipo de dato asignado es incorrecto");
+                                    error = true;
+                                }
+
+                                if(variables.indexOf(variable)>=0){
+
+                                    if(!tipoDato.get(variables.indexOf(variable)).equals(aux)){
+                                        System.out.println("ERROR - El tipo de dato asignado es incorrecto");
+                                        error = true;
+                                    }
+
+                                }else {
+                                    System.out.println("ERROR - El tipo de dato asignado es incorrecto");
+                                    error = true;
+                                }
+
+
+                            }else if(!valor1.equals("") && !valor2.equals("") && !operacion.equals("")){
+
+                                String aux = "";
+
+                                if(valor1.startsWith("\"")){
+                                    aux = "String";
+                                }else if(valor1.matches("^[-+]?[0-9]+$")){
+                                    aux = "int";
+                                }else{
+                                    System.out.println("ERROR - El tipo de dato asignado es incorrecto");
+                                    error = true;
+                                }
+
+                                String aux2 = "";
+
+                                if(valor2.startsWith("\"")){
+                                    aux2 = "String";
+                                }else if(valor2.matches("^[-+]?[0-9]+$")){
+                                    aux2 = "int";
+                                }else{
+                                    System.out.println("ERROR - El tipo de dato asignado es incorrecto");
+                                    error = true;
+                                }
+
+                                if(!tipoDato.get(variables.indexOf(variable)).equals(aux) && !tipoDato.get(variables.indexOf(variable)).equals(aux2)){
+                                    System.out.println("ERROR - El tipo de dato asignado es incorrecto");
+                                    error = true;
+                                }else{
+
+                                    if(operacion.equals("suma")){
+
+                                        if(!aux.equals(aux2) && aux.equals("int")){
+                                            System.out.println("ERROR - El tipo de dato asignado es incorrecto");
+                                            error = true;
+                                        }
+
+                                    }else if(operacion.equals("multiplicacion")){
+                                        if(!aux.equals(aux2) && aux.equals("int")){
+                                            System.out.println("ERROR - El tipo de dato asignado es incorrecto");
+                                            error = true;
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                            if(linea.split("")[0].equals(";")){
+
+                                tDato = "";
+                                declaracion = false;
+                                valor1 = "";
+                                valor2 = "";
+                                variable = "";
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                if(!error){
+                    System.out.println(">> El programa funciona correctamente <<");
+                    System.out.println(">> COMPILADO <<");
+                }
+            
+            }else{
+                System.out.println("\n>> ANALISIS SEMANTICO NO SE PUEDE CREAR POR ERRORES (PANICO)");
+            }
+            
+        }finally{
+            if(in!=null){ //En caso de estar abierto el documento
+                in.close(); //Cerrar el documento
+            }
+        }
+        
+    } //Fin de método 'analisisSemantico'
     
     /**
      * Método para recorrer el árbol sintáctico de manera preorden (izquierda a derecha)
